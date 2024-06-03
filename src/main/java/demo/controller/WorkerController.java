@@ -6,6 +6,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.client.RestClient;
@@ -16,6 +17,7 @@ public class WorkerController {
     private Worker self;
 
     @EventListener(ApplicationReadyEvent.class)
+    @Scheduled(fixedRate = 6 * 1000)
     public void afterStartup(){
         this.hostname = System.getenv().get("HOSTNAME");
         if (this.hostname!= null){
@@ -27,7 +29,8 @@ public class WorkerController {
                     .body(this.self).retrieve();
         }
     }
-    @GetMapping("/hello2")
+
+    @GetMapping("/hello")
     public ResponseEntity<String> hello(){
         return new ResponseEntity<>(hostname + " says hello!", HttpStatus.OK);
     }
