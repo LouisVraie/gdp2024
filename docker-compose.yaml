@@ -1,18 +1,85 @@
 version: "3.8"
 services:
-  rest-user:
-    # image: gestiondeprojet-loginapp:latest
+  loadbalancer:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rest-user
+    image: gdp-projectapp:latest
+    container_name: loadbalancer
     ports:
       - "8081:8081"
-  login:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: login
-    ports:
-      - "8082:8081"
+    environment:
+      - HOSTNAME=loadbalancer
+    networks:
+      network:
+        ipv4_address: 172.36.0.2
+
+  registry:
+    image: gdp-projectapp:latest
+    container_name: registry
+    environment:
+      - HOSTNAME=registry
+    networks:
+      network:
+        ipv4_address: 172.36.0.3
+    depends_on:
+      - loadbalancer
+
+  worker1:
+    image: gdp-projectapp:latest
+    container_name: worker1
+    environment:
+      - HOSTNAME=worker1
+      - TYPE=hello
+    networks:
+      network:
+        ipv4_address: 172.36.0.4
+    depends_on:
+      - registry
+
+  worker2:
+    image: gdp-projectapp:latest
+    container_name: worker2
+    environment:
+      - HOSTNAME=worker2
+      - TYPE=hello
+    networks:
+      network:
+        ipv4_address: 172.36.0.5
+    depends_on:
+      - registry
+
+  worker3:
+    image: gdp-projectapp:latest
+    container_name: worker3
+    environment:
+      - HOSTNAME=worker3
+      - TYPE=chat
+    networks:
+      network:
+        ipv4_address: 172.36.0.6
+    depends_on:
+      - registry
+
+  worker4:
+    image: gdp-projectapp:latest
+    container_name: worker4
+    environment:
+      - HOSTNAME=worker4
+      - TYPE=chat
+    networks:
+      network:
+        ipv4_address: 172.36.0.7
+    depends_on:
+      - registry
+
+networks:
+  network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.36.0.0/16"
+          gateway: "172.36.0.1"
+
 
