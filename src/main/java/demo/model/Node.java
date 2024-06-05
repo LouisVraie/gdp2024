@@ -1,13 +1,27 @@
 package demo.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+
+import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 public class Node {
+    @Id
     String hostname;
+
+    @OneToMany(mappedBy = "node")
     List<Worker> workers;
+
+    public Node () {
+
+    }
 
     public Node(String hostname) {
         this.hostname = hostname;
+        this.workers = new ArrayList<>();
     }
 
     public Node(String hostname, List<Worker> workers) {

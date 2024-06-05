@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,50 +29,36 @@ public class LoadBalancer {
 
     @Value("${server.port}")
     private int serverPort;
-    private List<Node> nodes;
-    private Map<String, Set<Integer>> workers = new HashMap<>();
+    private Map<String, Set<String>> workers = new HashMap<>();
     private Map<String, Integer> indexes = new HashMap<>();
 
-    @PostMapping("/updateWorkers")
-    public ResponseEntity<Map<String, Set<Integer>>> updateWorkers(@RequestBody List<Worker> workers) {
-        log.info("Updated workers : {}", workers);
-
-        for (Worker worker : workers) {
-            String service = worker.getService();
-
-            // Set workers with types
-            if (this.workers.containsKey(service)) {
-                this.workers.get(service).add(worker.getPort());
-            } else {
-                this.workers.put(service, new HashSet<>(Arrays.asList(worker.getPort())));
-                this.indexes.put(service, 0);
-            }
-        }
-
-        return new ResponseEntity<>(this.workers, HttpStatus.OK);
-    }
-
     @PostMapping("/updateNodes")
-    public ResponseEntity<Map<String, Set<Integer>>> updateNodes(@RequestBody List<Node> nodes) {
-        log.info("Updated nodes : {}", workers);
+    public ResponseEntity<List<Node>> updateNodes(@RequestBody List<Node> nodes) {
+        log.info("Updated nodes : {}", nodes);
 
-        for (Worker worker : workers) {
-            String service = worker.getService();
+        for (Node node : nodes) {
+            if (node.getWorkers().isEmpty()) {
+                break;
+            }
+            for (Worker worker : node.getWorkers()) {
+                String service = worker.getService();
+                String hostAndPort = node.getHostname()+":"+worker.getPort();
 
-            // Set workers with types
-            if (this.workers.containsKey(service)) {
-                this.workers.get(service).add(worker.getPort());
-            } else {
-                this.workers.put(service, new HashSet<>(Arrays.asList(worker.getHostname())));
-                this.indexes.put(service, 0);
+                // Set workers with types
+                if (this.workers.containsKey(service)) {
+                    this.workers.get(service).add(hostAndPort);
+                } else {
+                    this.workers.put(service, new HashSet<>(Arrays.asList(hostAndPort)));
+                    this.indexes.put(service, 0);
+                }
             }
         }
 
-        return new ResponseEntity<>(this.workers, HttpStatus.OK);
+        return new ResponseEntity<>(nodes, HttpStatus.OK);
     }
 
     private ResponseEntity<String> sendRequest(String path, String service) {
-        List<Integer> workersValid;
+        List<String> workersValid;
 
         if (!this.workers.containsKey(service) || (workersValid = new ArrayList<>(this.workers.get(service))) == null || workersValid.isEmpty()) {
             return new ResponseEntity<>("No workers found !", HttpStatus.NOT_FOUND);
@@ -80,8 +67,8 @@ public class LoadBalancer {
         this.indexes.put(service, (this.indexes.get(service) + 1) % workersValid.size());
 
         while (!workersValid.isEmpty()) {
-            Integer workerPort = workersValid.get(this.indexes.get(service));
-            String uri = String.format("http://%s:%d/service%s", nodeName, workerPort, path);
+            String workerAddress = workersValid.get(this.indexes.get(service));
+            String uri = String.format("http://%s/service%s", workerAddress, path);
 
             try {
                 HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(uri)).timeout(Duration.ofSeconds(2))
@@ -92,10 +79,10 @@ public class LoadBalancer {
 
                 return new ResponseEntity<>(response.body(), HttpStatus.OK);
             } catch (Exception e) {
-                log.error("Dead worker: {}", workerName);
+                log.error("Dead worker: {}", workerAddress);
 
-                workersValid.remove(workerName);
-                this.workers.get(service).remove(workerName);
+                workersValid.remove(workerAddress);
+                this.workers.get(service).remove(workerAddress);
 
                 if (workersValid.isEmpty()) {
                     this.indexes.put(service, 0);
@@ -118,5 +105,15 @@ public class LoadBalancer {
     @GetMapping("/chat")
     public ResponseEntity<String> chat() {
         return this.sendRequest("/chat", "chat");
+    }
+
+    @GetMapping("/nodes")
+    public ResponseEntity<Object> getNodes() {
+        RestClient restClient = RestClient.create();
+        ResponseEntity<Object> response = restClient.get()
+                .uri(String.format("http://registry:%d/registry/nodes", this.serverPort))
+                .retrieve().toEntity(Object.class);
+
+        return new ResponseEntity<Object>(response.getBody(),HttpStatus.OK);
     }
 }

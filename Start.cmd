@@ -6,7 +6,5 @@ docker rm -f loadbalancer && docker run -d -p 8081:8081 --net=lb-net --name load
 
 docker rm -f registry && docker run -d  --net=lb-net --name registry -e HOSTNAME=registry gdp-projectapp
 
-docker rm -f worker1 && docker run -d --net=lb-net --name worker1 -e HOSTNAME=worker1 -e SERVICE=hello gdp-projectapp
-docker rm -f worker2 && docker run -d --net=lb-net --name worker2 -e HOSTNAME=worker2 -e SERVICE=hello gdp-projectapp
-docker rm -f worker3 && docker run -d --net=lb-net --name worker3 -e HOSTNAME=worker3 -e SERVICE=chat gdp-projectapp
-docker rm -f worker4 && docker run -d --net=lb-net --name worker4 -e HOSTNAME=worker4 -e SERVICE=chat gdp-projectapp
+docker rm -f node1 && docker run -d --net=lb-net --name node1 -e HOSTNAME=node1 gdp-projectapp
+docker rm -f node2 && docker run -d --net=lb-net --name node2 -e HOSTNAME=node2 gdp-projectapp

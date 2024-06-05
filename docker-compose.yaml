@@ -25,53 +25,75 @@ services:
     depends_on:
       - loadbalancer
 
-  worker1:
+  node1:
     image: gdp-projectapp:latest
-    container_name: worker1
+    container_name: node1
     environment:
-      - HOSTNAME=worker1
-      - SERVICE=hello
+      - HOSTNAME=node1
     networks:
       network:
         ipv4_address: 172.36.0.4
     depends_on:
       - registry
 
-  worker2:
+  node2:
     image: gdp-projectapp:latest
-    container_name: worker2
+    container_name: node2
     environment:
-      - HOSTNAME=worker2
-      - SERVICE=hello
+      - HOSTNAME=node2
     networks:
       network:
         ipv4_address: 172.36.0.5
     depends_on:
       - registry
 
-  worker3:
-    image: gdp-projectapp:latest
-    container_name: worker3
-    environment:
-      - HOSTNAME=worker3
-      - SERVICE=chat
-    networks:
-      network:
-        ipv4_address: 172.36.0.6
-    depends_on:
-      - registry
+  # worker1:
+  #   image: gdp-projectapp:latest
+  #   container_name: worker1
+  #   environment:
+  #     - HOSTNAME=worker1
+  #     - SERVICE=hello
+  #   networks:
+  #     network:
+  #       ipv4_address: 172.36.0.4
+  #   depends_on:
+  #     - registry
 
-  worker4:
-    image: gdp-projectapp:latest
-    container_name: worker4
-    environment:
-      - HOSTNAME=worker4
-      - SERVICE=chat
-    networks:
-      network:
-        ipv4_address: 172.36.0.7
-    depends_on:
-      - registry
+  # worker2:
+  #   image: gdp-projectapp:latest
+  #   container_name: worker2
+  #   environment:
+  #     - HOSTNAME=worker2
+  #     - SERVICE=hello
+  #   networks:
+  #     network:
+  #       ipv4_address: 172.36.0.5
+  #   depends_on:
+  #     - registry
+
+  # worker3:
+  #   image: gdp-projectapp:latest
+  #   container_name: worker3
+  #   environment:
+  #     - HOSTNAME=worker3
+  #     - SERVICE=chat
+  #   networks:
+  #     network:
+  #       ipv4_address: 172.36.0.6
+  #   depends_on:
+  #     - registry
+
+  # worker4:
+  #   image: gdp-projectapp:latest
+  #   container_name: worker4
+  #   environment:
+  #     - HOSTNAME=worker4
+  #     - SERVICE=chat
+  #   networks:
+  #     network:
+  #       ipv4_address: 172.36.0.7
+  #   depends_on:
+  #     - registry
 
 networks:
   network:

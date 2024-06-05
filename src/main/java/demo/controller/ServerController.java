@@ -19,9 +19,6 @@ public class ServerController {
     @Autowired
     private RegistryService registryService;
 
-    @Autowired
-    private ServerService serverService;
-
     private int numNextWorker = 8000;
 
     @GetMapping("/launch/{service}")
@@ -30,7 +27,7 @@ public class ServerController {
             @RequestParam(value = "nbw") int nbw
     ) {
         try{
-            boolean isNodeStarted = this.serverService.launchService(service, nbw, this.numNextWorker);
+            boolean isNodeStarted = this.registryService.launchService(service, nbw, this.numNextWorker);
             this.numNextWorker += nbw;
             String message;
             if (isNodeStarted) {

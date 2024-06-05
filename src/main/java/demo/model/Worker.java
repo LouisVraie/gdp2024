@@ -11,6 +11,9 @@ public class Worker {
     private String service;
     private Date lastCheck;
 
+    @ManyToOne
+    private Node node;
+
     public Worker() {
     }
 
@@ -36,5 +39,13 @@ public class Worker {
     }
     public void setLastCheck(Date lastCheck) {
         this.lastCheck = lastCheck;
+    }
+
+    public Node getNode() {
+        return node;
+    }
+
+    public void setNode(Node node) {
+        this.node = node;
     }
 }
