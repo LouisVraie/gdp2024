@@ -1,6 +1,8 @@
 package demo.service;
 
+import demo.model.Node;
 import demo.model.Worker;
+import demo.repository.NodeRepository;
 import demo.repository.WorkerRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -23,7 +25,8 @@ public class RegistryService {
     private final RestClient restClient = RestClient.create();
 
     @Autowired
-    private WorkerRepository workersRepo;
+    private WorkerRepository workerRepository;
+
 
     @Value("${server.port}")
     private int serverPort;
@@ -32,7 +35,7 @@ public class RegistryService {
     @Transactional
     public void reportRunningWorkers() {
         if (System.getenv().get("HOSTNAME").equals("registry")) {
-            List<Worker> workers = workersRepo.streamAllBy().toList();
+            List<Worker> workers = workerRepository.streamAllBy().toList();
             log.info("Running workers {}", workers);
 
             List<Worker> updatedWorkers = new ArrayList<>();
@@ -40,9 +43,9 @@ public class RegistryService {
             workers.forEach(worker -> {
                 // Compare date and check it's within 2min range
                 if (new Date(System.currentTimeMillis() - registeryFixedRate).after(worker.getLastCheck())) {
-                    log.info("Worker {} is not responding", worker.getHostname());
-                    workersRepo.delete(worker);
-                    log.info("Worker {} is removed", worker.getHostname());
+                    log.info("Worker {} is not responding", worker.getPort());
+                    workerRepository.delete(worker);
+                    log.info("Worker {} is removed", worker.getPort());
                 } else {
                     updatedWorkers.add(worker);
                 }
@@ -54,17 +57,17 @@ public class RegistryService {
 
     @Transactional
     public void addWorker(Worker worker) {
-        Worker oldWorker = this.workersRepo.findWorkerByHostname(worker.getHostname());
+        Worker oldWorker = this.workerRepository.findWorkerByPort(worker.getPort());
 
         if (oldWorker != null) {
             oldWorker.setLastCheck(worker.getLastCheck());
-            this.workersRepo.save(oldWorker);
+            this.workerRepository.save(oldWorker);
             log.info("Updated worker : {}", worker);
         } else {
-            this.workersRepo.save(worker);
+            this.workerRepository.save(worker);
             log.info("Added worker : {}", worker);
 
-            List<Worker> workers = workersRepo.streamAllBy().toList();
+            List<Worker> workers = workerRepository.streamAllBy().toList();
 
             this.updateWorkers(workers);
         }
@@ -76,6 +79,6 @@ public class RegistryService {
     }
 
     public List<Worker> getWorkers() {
-        return this.workersRepo.streamAllBy().toList();
+        return this.workerRepository.streamAllBy().toList();
     }
 }

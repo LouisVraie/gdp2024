@@ -17,7 +17,7 @@ import org.springframework.web.client.RestClient;
 public class WorkerService {
     private final Logger log = LoggerFactory.getLogger(WorkerService.class);
     private final  int workerFixedRate = 60000;
-    private String hostname;
+    private String hostname; // TODO : Delete
     private String service;
     private Worker self;
 

@@ -1,6 +1,7 @@
 package demo.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import demo.model.Node;
 import demo.model.Worker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,11 +28,12 @@ public class LoadBalancer {
 
     @Value("${server.port}")
     private int serverPort;
-    private Map<String, Set<String>> workers = new HashMap<>();
+    private List<Node> nodes;
+    private Map<String, Set<Integer>> workers = new HashMap<>();
     private Map<String, Integer> indexes = new HashMap<>();
 
     @PostMapping("/updateWorkers")
-    public ResponseEntity<Map<String, Set<String>>> updateWorkers(@RequestBody List<Worker> workers) {
+    public ResponseEntity<Map<String, Set<Integer>>> updateWorkers(@RequestBody List<Worker> workers) {
         log.info("Updated workers : {}", workers);
 
         for (Worker worker : workers) {
@@ -39,7 +41,26 @@ public class LoadBalancer {
 
             // Set workers with types
             if (this.workers.containsKey(service)) {
-                this.workers.get(service).add(worker.getHostname());
+                this.workers.get(service).add(worker.getPort());
+            } else {
+                this.workers.put(service, new HashSet<>(Arrays.asList(worker.getPort())));
+                this.indexes.put(service, 0);
+            }
+        }
+
+        return new ResponseEntity<>(this.workers, HttpStatus.OK);
+    }
+
+    @PostMapping("/updateNodes")
+    public ResponseEntity<Map<String, Set<Integer>>> updateNodes(@RequestBody List<Node> nodes) {
+        log.info("Updated nodes : {}", workers);
+
+        for (Worker worker : workers) {
+            String service = worker.getService();
+
+            // Set workers with types
+            if (this.workers.containsKey(service)) {
+                this.workers.get(service).add(worker.getPort());
             } else {
                 this.workers.put(service, new HashSet<>(Arrays.asList(worker.getHostname())));
                 this.indexes.put(service, 0);
@@ -50,7 +71,7 @@ public class LoadBalancer {
     }
 
     private ResponseEntity<String> sendRequest(String path, String service) {
-        List<String> workersValid;
+        List<Integer> workersValid;
 
         if (!this.workers.containsKey(service) || (workersValid = new ArrayList<>(this.workers.get(service))) == null || workersValid.isEmpty()) {
             return new ResponseEntity<>("No workers found !", HttpStatus.NOT_FOUND);
@@ -59,8 +80,8 @@ public class LoadBalancer {
         this.indexes.put(service, (this.indexes.get(service) + 1) % workersValid.size());
 
         while (!workersValid.isEmpty()) {
-            String workerName = workersValid.get(this.indexes.get(service));
-            String uri = String.format("http://%s:%d/service%s", workerName, this.serverPort, path);
+            Integer workerPort = workersValid.get(this.indexes.get(service));
+            String uri = String.format("http://%s:%d/service%s", nodeName, workerPort, path);
 
             try {
                 HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(uri)).timeout(Duration.ofSeconds(2))

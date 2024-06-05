@@ -7,28 +7,28 @@ import java.util.Date;
 @Entity
 public class Worker {
     @Id
-    private String hostname;
-
+    private int port;
     private String service;
     private Date lastCheck;
 
     public Worker() {
     }
-    public Worker(String hostname, String service) {
-        this.hostname = hostname;
+
+    public Worker(int port, String service) {
+        this.port = port;
         this.service = service;
         this.lastCheck = new Date(System.currentTimeMillis());
     }
 
-    public String getHostname() {
-        return hostname;
+    public int getPort() {
+        return port;
     }
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
+
+    public void setPort(int port) {
+        this.port = port;
     }
 
     public String getService() { return service; }
-
     public void setService(String type) { this.service = type; }
 
     public Date getLastCheck() {
