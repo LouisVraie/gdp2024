@@ -6,7 +6,7 @@ Author : Louis Vraie
 
 - `v1` : Début du projet
 - `v2` : Version aboutie
-- `v3` : N'est pas laçable
+- `v3` : N'est pas lançable
 - `v4` : Version incomplète des attendus
 
 ## Lancer le projet
