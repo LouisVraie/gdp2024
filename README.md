@@ -2,7 +2,7 @@
 
 Author : Louis Vraie
 
-## État des version
+## État des versions
 
 - `v1` : Début du projet
 - `v2` : Version aboutie
