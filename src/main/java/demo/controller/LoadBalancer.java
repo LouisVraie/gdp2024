@@ -29,36 +29,37 @@ public class LoadBalancer {
     private int serverPort;
     private Map<String, Set<String>> workers = new HashMap<>();
     private Map<String, Integer> indexes = new HashMap<>();
+
     @PostMapping("/updateWorkers")
     public ResponseEntity<Map<String, Set<String>>> updateWorkers(@RequestBody List<Worker> workers) {
         log.info("Updated workers : {}", workers);
 
         for (Worker worker : workers) {
-            String type = worker.getType();
+            String service = worker.getService();
 
             // Set workers with types
-            if (this.workers.containsKey(type)) {
-                this.workers.get(type).add(worker.getHostname());
+            if (this.workers.containsKey(service)) {
+                this.workers.get(service).add(worker.getHostname());
             } else {
-                this.workers.put(type, new HashSet<>(Arrays.asList(worker.getHostname())));
-                this.indexes.put(type, 0);
+                this.workers.put(service, new HashSet<>(Arrays.asList(worker.getHostname())));
+                this.indexes.put(service, 0);
             }
         }
 
         return new ResponseEntity<>(this.workers, HttpStatus.OK);
     }
 
-    private ResponseEntity<String> sendRequest(String path, String type) {
+    private ResponseEntity<String> sendRequest(String path, String service) {
         List<String> workersValid;
 
-        if (!this.workers.containsKey(type) || (workersValid = new ArrayList<>(this.workers.get(type))) == null || workersValid.isEmpty()) {
+        if (!this.workers.containsKey(service) || (workersValid = new ArrayList<>(this.workers.get(service))) == null || workersValid.isEmpty()) {
             return new ResponseEntity<>("No workers found !", HttpStatus.NOT_FOUND);
         }
 
-        this.indexes.put(type, (this.indexes.get(type) + 1) % workersValid.size());
+        this.indexes.put(service, (this.indexes.get(service) + 1) % workersValid.size());
 
         while (!workersValid.isEmpty()) {
-            String workerName = workersValid.get(this.indexes.get(type));
+            String workerName = workersValid.get(this.indexes.get(service));
             String uri = String.format("http://%s:%d/service%s", workerName, this.serverPort, path);
 
             try {
@@ -73,14 +74,14 @@ public class LoadBalancer {
                 log.error("Dead worker: {}", workerName);
 
                 workersValid.remove(workerName);
-                this.workers.get(type).remove(workerName);
+                this.workers.get(service).remove(workerName);
 
                 if (workersValid.isEmpty()) {
-                    this.indexes.put(type, 0);
+                    this.indexes.put(service, 0);
                 } else {
                     Random r = new Random();
 
-                    this.indexes.put(type, r.nextInt(workersValid.size()));
+                    this.indexes.put(service, r.nextInt(workersValid.size()));
                 }
             }
         }

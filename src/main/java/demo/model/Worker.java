@@ -9,14 +9,14 @@ public class Worker {
     @Id
     private String hostname;
 
-    private String type;
+    private String service;
     private Date lastCheck;
 
     public Worker() {
     }
-    public Worker(String hostname, String type) {
+    public Worker(String hostname, String service) {
         this.hostname = hostname;
-        this.type = type;
+        this.service = service;
         this.lastCheck = new Date(System.currentTimeMillis());
     }
 
@@ -27,9 +27,9 @@ public class Worker {
         this.hostname = hostname;
     }
 
-    public String getType() { return type; }
+    public String getService() { return service; }
 
-    public void setType(String type) { this.type = type; }
+    public void setService(String type) { this.service = type; }
 
     public Date getLastCheck() {
         return lastCheck;

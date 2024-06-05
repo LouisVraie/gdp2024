@@ -19,7 +19,7 @@ import java.util.List;
 @Service
 public class RegistryService {
     private final Logger log = LoggerFactory.getLogger(RegistryService.class);
-    private final int registeryFixedRate = 12000;
+    private final int registeryFixedRate = 120000;
     private final RestClient restClient = RestClient.create();
 
     @Autowired
@@ -48,8 +48,7 @@ public class RegistryService {
                 }
             });
 
-            this.restClient.post().uri(String.format("http://loadbalancer:%d/updateWorkers", this.serverPort))
-                    .contentType(MediaType.APPLICATION_JSON).body(updatedWorkers).retrieve();
+            this.updateWorkers(workers);
         }
     }
 
@@ -64,7 +63,16 @@ public class RegistryService {
         } else {
             this.workersRepo.save(worker);
             log.info("Added worker : {}", worker);
+
+            List<Worker> workers = workersRepo.streamAllBy().toList();
+
+            this.updateWorkers(workers);
         }
+    }
+
+    private void updateWorkers(List<Worker> workers) {
+        this.restClient.post().uri(String.format("http://loadbalancer:%d/updateWorkers", this.serverPort))
+                .contentType(MediaType.APPLICATION_JSON).body(workers).retrieve();
     }
 
     public List<Worker> getWorkers() {

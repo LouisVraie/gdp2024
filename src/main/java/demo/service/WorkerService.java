@@ -15,10 +15,10 @@ import org.springframework.web.client.RestClient;
 
 @Service
 public class WorkerService {
-    private final Logger log = LoggerFactory.getLogger(RegistryController.class);
-    private final  int workerFixedRate = 6000;
+    private final Logger log = LoggerFactory.getLogger(WorkerService.class);
+    private final  int workerFixedRate = 60000;
     private String hostname;
-    private String type;
+    private String service;
     private Worker self;
 
     @Value("${server.port}")
@@ -28,9 +28,9 @@ public class WorkerService {
     @Scheduled(fixedRate = workerFixedRate)
     public void afterStartup(){
         this.hostname = System.getenv().get("HOSTNAME");
-        this.type = System.getenv().get("TYPE");
+        this.service = System.getenv().get("SERVICE");
         if (this.hostname != null && !this.hostname.equals("registry") && !this.hostname.equals("loadbalancer")){
-            this.self = new Worker(hostname, type);
+            this.self = new Worker(hostname, service);
             RestClient restClient = RestClient.create();
             restClient.post()
                     .uri(String.format("http://registry:%d/registry/addWorker", this.serverPort))
